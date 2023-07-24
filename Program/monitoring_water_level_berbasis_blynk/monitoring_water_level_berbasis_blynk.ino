@@ -1,19 +1,22 @@
 #include <Wire.h>
-#include<LiquidCrystal_I2C.h>
+#include <LiquidCrystal_I2C.h>
 #include <WiFi.h>
 #include <WiFiClient.h>
 #include <BlynkSimpleEsp32.h>
 
 BlynkTimer timer;
 
-LiquidCrystal_I2C lcd(0x27, 20,4);
+LiquidCrystal_I2C lcd(0x27, 16,2);
 
-char ssid[] = "ML LUTFI";
-char pass[] = "okmaju6571";
+char ssid[] = "Shafana kost";
+char pass[] = "Nantidulu-123";
 
-#define BLYNK_TEMPLATE_ID "TMPL6vU5AcI9-"
-#define BLYNK_TEMPLATE_NAME "water level monitoring system"
-#define BLYNK_AUTH_TOKEN "6-fqnqBSO3AAOSoa6SgrMT9FqY06Mte6"
+//char ssid[] = "ML LUTFI";
+//char pass[] = "okmaju6571";
+
+#define BLYNK_TEMPLATE_ID "TMPL6ZmqinD9s"
+#define BLYNK_TEMPLATE_NAME "Quickstart Template"
+#define BLYNK_AUTH_TOKEN "ZAuCmoxhVNMOfkM4OAceSryWexQTMlir"
 
 #define SENSOR      18
 #define TRIG_PIN    34
@@ -33,6 +36,9 @@ float flowRate;
 unsigned int flowMilliLitres;
 unsigned long totalMilliLitres;
 long duration_us, distance_cm;
+
+int ko_pompa; //kondisi pompa
+int ko_valve; //kondisi valve
 
 void IRAM_ATTR pulseCounter(){
   pulseCount++;
@@ -76,9 +82,12 @@ void loop() {
   if (distance_cm <= 25){
     digitalWrite(RELAY_POMPA, LOW);
     digitalWrite(RELAY_VALVE, LOW);
+    ko_pompa=0;
+    ko_valve=0;
     digitalWrite(BUZZER, LOW);
     lcd.setCursor(0,3);
-    lcd.print("    LEVEL 3!    ");}
+    lcd.print("    LEVEL 3!    ");
+    Blynk.logEvent("kondisi_tandon","Penuh");}
   else if (distance_cm > 25 && distance_cm <= 70){
     digitalWrite(BUZZER, LOW);
     lcd.setCursor(0,3);
@@ -91,8 +100,11 @@ void loop() {
     digitalWrite(RELAY_POMPA, HIGH);
     digitalWrite(RELAY_VALVE, HIGH);
     digitalWrite(BUZZER, HIGH);
+    ko_pompa=1;
+    ko_valve=1;
     lcd.setCursor(0,3);
-    lcd.print("    KOSONG!!    ");}
+    lcd.print("    KOSONG!!    ");
+    Blynk.logEvent("kondisi_tandon","Kosong");}
 
   Serial.print("distance: ");
   Serial.print(distance_cm);
@@ -135,6 +147,13 @@ void loop() {
 
 void myTimerEvent()
 {
+ Serial.print("kondisi pompa:");
+ Serial.println(ko_pompa);
+ Serial.print("kondisi valve");
+ Serial.println(ko_valve);
  Blynk.virtualWrite(V0,distance_cm);
  Blynk.virtualWrite(V1,totalMilliLitres/1000);
+ Blynk.virtualWrite(V2,ko_pompa);
+ Blynk.virtualWrite(V3,ko_valve);
+ 
 }
